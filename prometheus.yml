@@ -1,0 +1,17 @@
+  global:
+      scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+      evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+    # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+    rule_files:
+    scrape_configs:
+    - job_name: 'mv-metrics'
+      scrape_interval: 5s
+      metrics_path: /metrics
+      static_configs:
+        - targets: ['metrics.metrics-demo.svc.cluster.local:9080']

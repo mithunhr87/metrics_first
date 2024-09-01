@@ -1,0 +1,68 @@
+kind: Deployment
+apiVersion: apps/v1
+  namespace: metrics-demo
+  labels:
+    app: prometheus
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: metrics-app
+    app.openshift.io/runtime-namespace: metrics-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: prometheus
+        deployment: prometheus
+      annotations:
+        openshift.io/generated-by: OpenShiftWebConsole
+    spec:
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+                mode: 420
+            defaultMode: 420
+        - name: prometheus-1
+          emptyDir: {}
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: prometheus
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: prometheus-1
+              mountPath: /prometheus
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+          terminationMessagePolicy: File
+          image: 'image-registry.openshift-image-registry.svc:5000/metrics-demo/prometheus@sha256:3711a91555edc5fec48edb36a3431a73a17cd93da2feb815f212a2e5a7317108'
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
